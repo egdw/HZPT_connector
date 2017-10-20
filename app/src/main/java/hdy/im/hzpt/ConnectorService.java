@@ -137,11 +137,6 @@ public class ConnectorService extends Service {
                 Long date = cursor.getLong(cursor.getColumnIndex(Telephony.Sms.DATE));
                 String person = cursor.getString(cursor.getColumnIndex(Telephony.Sms.PERSON));
                 int type = cursor.getInt(cursor.getColumnIndex(Telephony.Sms.TYPE));
-                System.out.println(body);
-                System.out.println(address);
-                System.out.println(date);
-                System.out.println(person);
-                System.out.println(type);
                 if (body != null && body.contains("【杭电大】")) {
                     //说明是验证码
                     final String code = body.substring(body.indexOf("为:") + 2).trim();
@@ -150,16 +145,24 @@ public class ConnectorService extends Service {
                         @Override
                         public void run() {
                             boolean login = RequestUtils.login(utils.get("account"), code);
+                            //这里还要加一个判断就是.
+                            //如果用户是在否访客模式时间登陆的
+                            //这个时候获取到验证码但是肯定是无法登陆的.这里要另外加一个判断.
                             System.out.println("获取到的验证码:" + code);
                             if (login) {
-                                utils.put("isClient", true + "");
-                                System.out.println("登录成功!");
+                                utils.put("isClient", "true");
                                 utils.put("success", "true");
-                                ConnectorService.this.stopSelf();
+                                utils.put("code_get", "false");
                             } else {
-                                System.out.println("登录失败!");
-                                ConnectorService.this.stopSelf();
+                                if (code != null && code.length() == 6) {
+                                    //说明接收到了验证码.但是无法登陆
+                                    utils.put("code_get", "true");
+                                } else {
+                                    utils.put("code_get", "false");
+                                }
+                                utils.put("success", "");
                             }
+                            ConnectorService.this.stopSelf();
                         }
                     }).start();
 
