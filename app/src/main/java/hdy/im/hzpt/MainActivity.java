@@ -26,6 +26,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 
+import java.util.Calendar;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -341,35 +342,34 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                             if (login) {
                                 message.obj = true;
                             } else {
-                                String codeGet = shareUtils.get("code_get");
-                                if ("true".equals(codeGet)) {
-                                    //说明验证码实际上得到的.但是无法登陆成功.说明这个情况是非访客时间
+                                Calendar cal = Calendar.getInstance();
+                                int hour = cal.get(Calendar.HOUR);// 小时
+                                if (hour >= 17 || hour < 6) {
                                     Message obtainMessage = MainActivity.this.MainActivityHandler.obtainMessage();
                                     obtainMessage.what = 3;
                                     obtainMessage.obj = "当前时间访客模式无法登陆~谢谢~账户登陆无限制~";
                                     MainActivity.this.MainActivityHandler.sendMessage(obtainMessage);
                                     return;
-                                } else {
-                                    //再从数据库进行读取一次,以防万一
-                                    ContentResolver contentResolver = getContentResolver();
-                                    Uri uri = Uri.parse("content://sms/");
-                                    Cursor query = contentResolver.query(uri, new String[]{"address",
-                                            "person", "body", "date", "type"}, null, null, null);
-                                    if (query != null && query.moveToFirst()) {
-                                        String address = query.getString(0);
-                                        String person = query.getString(1);
-                                        String body = query.getString(2);
-                                        String date = query.getString(3);
-                                        String type = query.getString(4);
-                                        if (body != null && body.contains("【杭电大】")) {
-                                            //说明是验证码
-                                            String code = body.substring(body.indexOf("为:") + 2).trim();
-                                            boolean b = RequestUtils.login(shareUtils.get("account"), code);
-                                            message.obj = b;
-                                        }
-                                    } else {
-                                        message.obj = false;
+                                }
+                                //再从数据库进行读取一次,以防万一
+                                ContentResolver contentResolver = getContentResolver();
+                                Uri uri = Uri.parse("content://sms/");
+                                Cursor query = contentResolver.query(uri, new String[]{"address",
+                                        "person", "body", "date", "type"}, null, null, null);
+                                if (query != null && query.moveToFirst()) {
+                                    String address = query.getString(0);
+                                    String person = query.getString(1);
+                                    String body = query.getString(2);
+                                    String date = query.getString(3);
+                                    String type = query.getString(4);
+                                    if (body != null && body.contains("【杭电大】")) {
+                                        //说明是验证码
+                                        String code = body.substring(body.indexOf("为:") + 2).trim();
+                                        boolean b = RequestUtils.login(shareUtils.get("account"), code);
+                                        message.obj = b;
                                     }
+                                } else {
+                                    message.obj = false;
                                 }
                             }
                             MainActivityHandler.sendMessage(message);
@@ -391,7 +391,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         utils.toast("登录成功~");
                         onResume();
                     } else {
-                        utils.toast("登录失败~(是否给与权限?是否接收到验证码?是否已经超出上网时间?)");
+                        String codeGet = shareUtils.get("code_get");
+                        if ("true".equals(codeGet)) {
+                            //说明验证码实际上得到的.但是无法登陆成功.
+                            Message obtainMessage = MainActivity.this.MainActivityHandler.obtainMessage();
+                            obtainMessage.what = 3;
+                            obtainMessage.obj = "您的手机不支持自动输入验证码.请手动输入验证码~";
+                            MainActivity.this.MainActivityHandler.sendMessage(obtainMessage);
+                        } else {
+                            utils.toast("登录失败~(是否给与权限?是否接收到验证码?是否已经超出上网时间?)");
+                        }
                         AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
                         builder.setTitle("如果接收到验证码~请输入");
                         final EditText text = new EditText(MainActivity.this);
