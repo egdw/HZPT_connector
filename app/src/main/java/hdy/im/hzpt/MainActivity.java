@@ -26,7 +26,6 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 
-import java.util.Calendar;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -342,15 +341,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                             if (login) {
                                 message.obj = true;
                             } else {
-                                Calendar cal = Calendar.getInstance();
-                                int hour = cal.get(Calendar.HOUR);// 小时
-                                if (hour >= 17 || hour < 6) {
-                                    Message obtainMessage = MainActivity.this.MainActivityHandler.obtainMessage();
-                                    obtainMessage.what = 3;
-                                    obtainMessage.obj = "当前时间访客模式无法登陆~谢谢~账户登陆无限制~";
-                                    MainActivity.this.MainActivityHandler.sendMessage(obtainMessage);
-                                    return;
-                                }
                                 //再从数据库进行读取一次,以防万一
                                 ContentResolver contentResolver = getContentResolver();
                                 Uri uri = Uri.parse("content://sms/");
@@ -371,6 +361,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                 } else {
                                     message.obj = false;
                                 }
+//                                Calendar cal = Calendar.getInstance();
+//                                int hour = cal.get(Calendar.HOUR);// 小时
+//                                if (hour >= 17 || hour < 6) {
+//                                    Message obtainMessage = MainActivity.this.MainActivityHandler.obtainMessage();
+//                                    obtainMessage.what = 3;
+//                                    obtainMessage.obj = "当前时间访客模式无法登陆~谢谢~账户登陆无限制~";
+//                                    MainActivity.this.MainActivityHandler.sendMessage(obtainMessage);
+//                                    return;
+//                                }
                             }
                             MainActivityHandler.sendMessage(message);
                         }
